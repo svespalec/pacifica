@@ -1,10 +1,10 @@
 #include "aim.hxx"
+
 #include <utils/utils.hxx>
 #include <hook/hook.hxx>
+#include <sdk/sdk.hxx>
 
 namespace features::aim {
-  constexpr auto mouse_apply_pattern = "57 56 55 53 48 83 EC 48 C5 F8 77 C5 F8 29 74 24 30 C5 F8 29 7C 24 20 48 8B";
-
   using apply_input_t = void( __fastcall* )( void*, void*, void* );
   static apply_input_t original = nullptr;
 
@@ -18,11 +18,13 @@ namespace features::aim {
     // state->mouse->position = process( state->mouse->position );
   }
 
+  constexpr auto mouse_apply_fn = "57 56 55 53 48 83 EC 48 C5 F8 77 C5 F8 29 74 24 30 C5 F8 29 7C 24 20 48 8B";
+
   void init() {
     void* mouse_apply = nullptr;
 
     while ( !mouse_apply ) {
-      mouse_apply = utils::find_pattern( mouse_apply_pattern );
+      mouse_apply = utils::find_pattern( mouse_apply_fn );
       Sleep( 500 );
     }
 
