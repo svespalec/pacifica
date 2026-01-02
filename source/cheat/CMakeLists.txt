@@ -4,6 +4,7 @@ add_library( cheat SHARED
   "dllmain.cxx"
   "hook/hook.cxx"
   "utils/utils.cxx"
+  "features/aim.cxx"
 )
 
 # include cheat dir so subdirs can find pch.hxx

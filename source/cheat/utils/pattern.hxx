@@ -11,17 +11,17 @@ namespace utils {
   inline auto pattern_to_bytes( const char* pattern ) {
     std::vector< int > bytes {};
 
-    auto cur = pattern;
-    auto end = pattern + strlen( pattern );
+    auto start = const_cast< char* >( pattern );
+    auto end = const_cast< char* >( pattern ) + strlen( pattern );
 
-    while ( cur < end ) {
+    for ( auto cur = start; cur < end; ++cur ) {
       if ( *cur == '?' ) {
         ++cur;
         if ( *cur == '?' )
           ++cur;
         bytes.push_back( -1 );
       } else {
-        bytes.push_back( strtoul( cur, const_cast< char** >( &cur ), 16 ) );
+        bytes.push_back( strtoul( cur, &cur, 16 ) );
       }
     }
 
@@ -37,14 +37,10 @@ namespace utils {
     std::uint8_t* addr = nullptr;
 
     while ( VirtualQuery( addr, &mbi, sizeof( mbi ) ) ) {
-      // only scan committed executable memory, skip guarded pages
+      // only scan committed executable memory
       // 0xf0 = PAGE_EXECUTE (0x10) | PAGE_EXECUTE_READ (0x20) | PAGE_EXECUTE_READWRITE (0x40) | PAGE_EXECUTE_WRITECOPY (0x80)
-      bool executable = mbi.State == MEM_COMMIT && ( mbi.Protect & 0xf0 );
-
-      bool guarded = mbi.Protect & PAGE_GUARD;
-
-      if ( executable && !guarded ) {
-        auto base = static_cast< std::uint8_t* >( mbi.BaseAddress );
+      if ( mbi.State == MEM_COMMIT && ( mbi.Protect & 0xF0 ) ) {
+        auto base = reinterpret_cast< std::uint8_t* >( mbi.BaseAddress );
         auto region = mbi.RegionSize;
 
         if ( region >= size ) {
@@ -52,10 +48,10 @@ namespace utils {
             bool found = true;
 
             for ( size_t j = 0; j < size; ++j ) {
-              if ( base[ i + j ] != data[ j ] && data[ j ] != -1 ) {
-                found = false;
-                break;
-              }
+              if ( base[ i + j ] == data[ j ] || data[ j ] == -1 )
+                continue;
+              found = false;
+              break;
             }
 
             if ( found )
@@ -64,7 +60,7 @@ namespace utils {
         }
       }
 
-      addr = static_cast< std::uint8_t* >( mbi.BaseAddress ) + mbi.RegionSize;
+      addr = reinterpret_cast< std::uint8_t* >( mbi.BaseAddress ) + mbi.RegionSize;
     }
 
     return nullptr;
