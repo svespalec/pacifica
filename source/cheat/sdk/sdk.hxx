@@ -5,3 +5,4 @@
 #include "vec2.hxx"
 #include "list.hxx"
 #include "bindable.hxx"
+#include "scaler.hxx"

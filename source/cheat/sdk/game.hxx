@@ -1,8 +1,8 @@
 #pragma once
 
+#include "bindable.hxx"
 #include "vec2.hxx"
 #include "list.hxx"
-#include "bindable.hxx"
 #include "clock.hxx"
 
 struct hit_object {
@@ -65,7 +65,7 @@ struct gameplay_clock_container {
 
 struct player {
   char _pad0[ 0x3C8 ];
-  bindable< bool >* is_playing; // +0x3C8
+  bindable< bool >* playing; // +0x3C8
   char _pad1[ 0x38 ];
   gameplay_state* state; // +0x408
   char _pad2[ 0x58 ];
@@ -79,6 +79,6 @@ struct player {
   }
 
   bool is_playing() const {
-    return is_playing && is_playing->value;
+    return playing && playing->value;
   }
 };
