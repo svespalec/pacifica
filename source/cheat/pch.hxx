@@ -9,7 +9,7 @@
 #include <cstdio>
 #include <cstdint>
 
-#include <MinHook.h>
+#include <detours/detours.h>
 
 #pragma comment( lib, "psapi.lib" )
 

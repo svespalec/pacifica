@@ -1,34 +1,47 @@
 #include "pch.hxx"
 #include "hook.hxx"
 
+#include <vector>
+
+static std::vector< std::pair< void**, void* > > g_hooks;
+
 bool hook::init() {
-  if ( MH_Initialize() != MH_OK ) {
-    LOG( "failed to initialize minhook" );
-    return false;
-  }
-
-  LOG( "minhook initialized" );
-
+  LOG( "detours initialized" );
   return true;
 }
 
 void hook::shutdown() {
-  MH_DisableHook( MH_ALL_HOOKS );
-  MH_Uninitialize();
+  DetourTransactionBegin();
+  DetourUpdateThread( GetCurrentThread() );
 
-  LOG( "minhook shutdown" );
+  for ( auto& [ original, detour ] : g_hooks )
+    DetourDetach( original, detour );
+
+  DetourTransactionCommit();
+
+  g_hooks.clear();
+
+  LOG( "detours shutdown" );
 }
 
 bool hook::create( void* target, void* detour, void** original ) {
-  if ( MH_CreateHook( target, detour, original ) != MH_OK ) {
-    LOG( "failed to create hook at %p", target );
+  *original = target;
+
+  DetourTransactionBegin();
+  DetourUpdateThread( GetCurrentThread() );
+
+  if ( DetourAttach( original, detour ) != NO_ERROR ) {
+    DetourTransactionAbort();
+    LOG( "failed to attach hook at %p", target );
     return false;
   }
 
-  if ( MH_EnableHook( target ) != MH_OK ) {
-    LOG( "failed to enable hook at %p", target );
+  if ( DetourTransactionCommit() != NO_ERROR ) {
+    LOG( "failed to commit hook at %p", target );
     return false;
   }
+
+  g_hooks.emplace_back( original, detour );
 
   LOG( "hooked %p -> %p", target, detour );
 
@@ -36,9 +49,29 @@ bool hook::create( void* target, void* detour, void** original ) {
 }
 
 bool hook::enable( void* target ) {
-  return MH_EnableHook( target ) == MH_OK;
+  for ( auto& [ original, detour ] : g_hooks ) {
+    if ( *original == target || detour == target ) {
+      DetourTransactionBegin();
+      DetourUpdateThread( GetCurrentThread() );
+      DetourAttach( original, detour );
+
+      return DetourTransactionCommit() == NO_ERROR;
+    }
+  }
+
+  return false;
 }
 
 bool hook::disable( void* target ) {
-  return MH_DisableHook( target ) == MH_OK;
+  for ( auto& [ original, detour ] : g_hooks ) {
+    if ( *original == target || detour == target ) {
+      DetourTransactionBegin();
+      DetourUpdateThread( GetCurrentThread() );
+      DetourDetach( original, detour );
+
+      return DetourTransactionCommit() == NO_ERROR;
+    }
+  }
+
+  return false;
 }

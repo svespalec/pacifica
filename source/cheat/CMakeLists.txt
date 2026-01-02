@@ -11,12 +11,14 @@ add_library( cheat SHARED
 target_include_directories( cheat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} )
 
 # packages
-find_package( minhook CONFIG REQUIRED )
 find_package( imgui CONFIG REQUIRED )
+find_path( DETOURS_INCLUDE_DIR detours/detours.h )
+find_library( DETOURS_LIBRARY detours )
 
+target_include_directories( cheat PRIVATE ${DETOURS_INCLUDE_DIR} )
 target_link_libraries( cheat PUBLIC
-  minhook::minhook
   imgui::imgui
+  ${DETOURS_LIBRARY}
 )
 
 # precompiled header
