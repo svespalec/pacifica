@@ -10,7 +10,7 @@ void utils::init_console() {
   freopen_s( &fp, "CONOUT$", "w", stdout );
   freopen_s( &fp, "CONOUT$", "w", stderr );
 
-  SetConsoleTitleA( "pacifica" );
+  SetConsoleTitleA( "pacifica v" BUILD_NUMBER );
 }
 
 void utils::free_console() {

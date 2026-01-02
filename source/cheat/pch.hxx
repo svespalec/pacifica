@@ -13,4 +13,6 @@
 
 #pragma comment( lib, "psapi.lib" )
 
+#define BUILD_NUMBER "0.1"
+
 #define LOG(fmt, ...) printf("[ pacifica ] " fmt "\n", ##__VA_ARGS__)

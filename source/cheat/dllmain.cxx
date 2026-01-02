@@ -7,7 +7,7 @@ static HMODULE g_module {};
 DWORD WINAPI init_thread( LPVOID ) {
   utils::init_console();
 
-  LOG( "pacifica has been loaded!" );
+  LOG( "pacifica loaded! build: " BUILD_NUMBER );
 
   if ( !hook::init() ) {
     LOG( "failed to init hooks" );
