@@ -20,6 +20,8 @@ DWORD WINAPI init_thread( LPVOID ) {
     return 1;
   }
 
+  LOG( "waiting for patterns..." );
+
   features::aim::init();
 
   return 0;
