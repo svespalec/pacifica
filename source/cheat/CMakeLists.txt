@@ -6,6 +6,9 @@ add_library( cheat SHARED
   "utils/utils.cxx"
 )
 
+# include cheat dir so subdirs can find pch.hxx
+target_include_directories( cheat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} )
+
 # packages
 find_package( minhook CONFIG REQUIRED )
 find_package( imgui CONFIG REQUIRED )
