@@ -15,6 +15,9 @@ DWORD WINAPI init_thread( LPVOID ) {
   }
 
   // TODO: main logic here
+  auto addr = utils::find_pattern( "48 8B 05 ? ? ? ? 48 85 C0" );
+
+  LOG( "addr: %p", addr );
 
   return 0;
 }
