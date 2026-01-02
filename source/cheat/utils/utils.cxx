@@ -4,11 +4,11 @@
 void utils::init_console() {
   AllocConsole();
 
-  FILE* fp {};
+  FILE* file {};
 
-  freopen_s( &fp, "CONIN$", "r", stdin );
-  freopen_s( &fp, "CONOUT$", "w", stdout );
-  freopen_s( &fp, "CONOUT$", "w", stderr );
+  freopen_s( &file, "CONIN$", "r", stdin );
+  freopen_s( &file, "CONOUT$", "w", stdout );
+  freopen_s( &file, "CONOUT$", "w", stderr );
 
   SetConsoleTitleA( "pacifica v" BUILD_NUMBER );
 }
