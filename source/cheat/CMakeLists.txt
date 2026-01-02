@@ -1,5 +1,7 @@
-add_library( cheat STATIC
+add_library( cheat SHARED
   "pch.hxx"
+  "pch.cxx"
+  "dllmain.cxx"
 )
 
 # packages
