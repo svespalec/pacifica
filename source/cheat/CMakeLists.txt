@@ -3,6 +3,7 @@ add_library( cheat SHARED
   "pch.cxx"
   "dllmain.cxx"
   "hook/hook.cxx"
+  "utils/utils.cxx"
 )
 
 # packages
