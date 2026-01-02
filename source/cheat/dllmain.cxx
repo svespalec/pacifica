@@ -7,6 +7,12 @@ static HMODULE g_module {};
 DWORD WINAPI init_thread( LPVOID ) {
   utils::init_console();
 
+  LOG( "[*] waiting for clrjit.dll...\n" );
+
+  while ( !GetModuleHandleA( "clrjit.dll" ) ) {
+    Sleep( 100 );
+  }
+
   LOG( "pacifica loaded! build: " BUILD_NUMBER );
 
   if ( !hook::init() ) {
