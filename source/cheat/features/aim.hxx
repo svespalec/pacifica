@@ -2,10 +2,10 @@
 
 namespace features::aim {
   namespace config {
-    inline float pull = 0.02f;
-    inline float decay = 0.97f;
-    inline float fov = 15.0f;
-    inline bool display_overlay = false;
+    inline float pull = 0.014f;
+    inline float decay = 0.95f;
+    inline float fov = 25.0f;
+    inline bool display_overlay = true;
   } // namespace config
 
   void init();

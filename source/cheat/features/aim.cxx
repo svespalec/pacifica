@@ -101,10 +101,10 @@ namespace features::aim {
     float fov_radius = scaled_radius + config::fov;
 
     // colors
-    const render::color col_fov_fill{ 100, 180, 255, 25 };
+    const render::color col_fov_fill{ 100, 180, 255, 60 };
     const render::color col_fov_border{ 100, 180, 255, 80 };
-    const render::color col_hitcircle{ 255, 255, 255, 120 };
-    const render::color col_target_fill{ 255, 100, 100, 40 };
+    const render::color col_hitcircle{ 255, 80, 120, 255 };
+    const render::color col_target_fill{ 255, 80, 120, 50 };
     const render::color col_offset_line{ 100, 255, 150, 180 };
     const render::color col_cursor_dot{ 255, 255, 255, 200 };
 
