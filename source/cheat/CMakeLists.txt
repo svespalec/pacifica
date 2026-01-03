@@ -6,6 +6,7 @@ add_library( cheat SHARED
   "utils/utils.cxx"
   "features/aim.cxx"
   "menu/menu.cxx"
+  "render/render.cxx"
 )
 
 # include cheat dir so subdirs can find pch.hxx

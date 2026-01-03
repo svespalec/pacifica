@@ -101,7 +101,6 @@ namespace features::aim {
     float scaled_radius = g_scaler.scale_value( object_radius );
     float fov_radius = scaled_radius + config::fov;
 
-    // helper to convert float[4] (0-1) to render::color (0-255)
     // clang-format off
     auto to_col = []( const float* c, float alpha_mult = 1.0f ) {
       return render::color{
