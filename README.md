@@ -1,5 +1,5 @@
 ## pacifica
-a simple internal osu lazer cheat for educational purposes. for offline use only!
+an osu! lazer aim assist for setting your best scores offline!
 
 ## features
 - aim assist
