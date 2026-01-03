@@ -11,3 +11,4 @@ a simple internal osu lazer cheat for educational purposes. for offline use only
   
 ## showcase
 ![menu](metadata/menu.png)
+![console](metadata/console.png)
