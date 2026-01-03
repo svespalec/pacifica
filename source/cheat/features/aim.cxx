@@ -10,6 +10,8 @@ namespace features::aim {
   // state
   static player* g_player = nullptr;
   static vec2 g_offset = {};
+  static vec2 g_cursor_pos = {};      // raw cursor position (before offset)
+  static vec2 g_adjusted_pos = {};    // adjusted position (after offset)
 
   // find the next hit object we should aim at
   static hit_object* find_target( double current_time ) {
@@ -46,14 +48,19 @@ namespace features::aim {
   }
 
   static vec2 process( vec2 pos ) {
+    // store raw cursor pos for overlay
+    g_cursor_pos = pos;
+
     // always decay offset so never sudden changes
     g_offset = g_offset * config::decay;
 
     double time = g_player->get_current_time();
     auto* obj = find_target( time );
 
-    if ( !obj )
-      return pos + g_offset;
+    if ( !obj ) {
+      g_adjusted_pos = pos + g_offset;
+      return g_adjusted_pos;
+    }
 
     vec2 target = g_scaler.to_screen( obj->get_position() );
     vec2 to_target = target - ( pos + g_offset );
@@ -68,7 +75,80 @@ namespace features::aim {
     if ( dist < assist_radius && dist > 1.0f )
       g_offset = g_offset + to_target * config::pull;
 
-    return pos + g_offset;
+    g_adjusted_pos = pos + g_offset;
+    return g_adjusted_pos;
+  }
+
+  void draw() {
+    if ( !config::display_overlay )
+      return;
+
+    if ( !g_player || !g_player->is_playing() )
+      return;
+
+    if ( !g_player->state || !g_player->state->map || !g_player->state->map->difficulty )
+      return;
+
+    // sync scaler with current window size
+    g_scaler.update();
+
+    double time = g_player->get_current_time();
+    auto* obj = find_target( time );
+
+    float cs = g_player->state->map->difficulty->circle_size;
+    float object_radius = 54.4f - 4.48f * cs;
+    float scaled_radius = g_scaler.scale_value( object_radius );
+    float fov_radius = scaled_radius + config::fov;
+
+    // colors
+    const render::color col_fov_fill{ 100, 180, 255, 25 };
+    const render::color col_fov_border{ 100, 180, 255, 80 };
+    const render::color col_hitcircle{ 255, 255, 255, 120 };
+    const render::color col_target_fill{ 255, 100, 100, 40 };
+    const render::color col_offset_line{ 100, 255, 150, 180 };
+    const render::color col_cursor_dot{ 255, 255, 255, 200 };
+
+    // draw FOV circle around current cursor position
+    render::fill_circle( g_adjusted_pos, fov_radius, col_fov_fill );
+    render::draw_circle( g_adjusted_pos, fov_radius, col_fov_border, 1.5f );
+
+    // draw target info if we have one
+    if ( obj ) {
+      vec2 target = g_scaler.to_screen( obj->get_position() );
+
+      // subtle fill on target
+      render::fill_circle( target, scaled_radius, col_target_fill );
+
+      // hitcircle outline
+      render::draw_circle( target, scaled_radius, col_hitcircle, 2.0f );
+
+      // line from cursor to target center (shows pull direction)
+      float dist = ( target - g_adjusted_pos ).length();
+      if ( dist > 2.0f && dist < fov_radius * 2.0f ) {
+        render::draw_line( g_adjusted_pos, target, { 255, 255, 255, 40 }, 1.0f );
+      }
+    }
+
+    // draw offset visualization (line from raw cursor to adjusted cursor)
+    float offset_mag = g_offset.length();
+    if ( offset_mag > 1.0f ) {
+      // line showing the offset pull
+      render::draw_line( g_cursor_pos, g_adjusted_pos, col_offset_line, 2.0f );
+
+      // small dot at raw cursor position
+      render::fill_circle( g_cursor_pos, 3.0f, col_offset_line );
+    }
+
+    // small crosshair at adjusted cursor position
+    render::fill_circle( g_adjusted_pos, 4.0f, col_cursor_dot );
+    render::draw_circle( g_adjusted_pos, 4.0f, { 0, 0, 0, 150 }, 1.0f );
+
+    // minimal HUD in corner
+    if ( offset_mag > 0.5f ) {
+      char buf[ 32 ];
+      snprintf( buf, sizeof( buf ), "%.1fpx", offset_mag );
+      render::draw_text( { 10, 10 }, buf, { 100, 255, 150, 200 } );
+    }
   }
 
   // hooks
@@ -120,51 +200,4 @@ namespace features::aim {
     SETUP_HOOK( mouse_apply, hooked_apply_input, original_apply_input );
     SETUP_HOOK( update_gameplay, hooked_update_gameplay_state, original_update_gameplay_state );
   }
-
-  void draw() {
-    if ( !config::display_overlay )
-      return;
-
-    if ( !g_player || !g_player->is_playing() )
-      return;
-
-    if ( !g_player->state || !g_player->state->map || !g_player->state->map->difficulty )
-      return;
-
-    // get current mouse position from last processed input
-    double time = g_player->get_current_time();
-    auto* obj = find_target( time );
-
-    // calculate assist radius
-    float cs = g_player->state->map->difficulty->circle_size;
-    float object_radius = 54.4f - 4.48f * cs;
-    float scaled_radius = g_scaler.scale_value( object_radius );
-    float assist_radius = scaled_radius + config::fov;
-
-    // we need to get the current cursor position. use the offset we're tracking
-    // since we don't have direct access to mouse pos here, approximate from last frame
-
-    if ( obj ) {
-      vec2 target = g_scaler.to_screen( obj->get_position() );
-
-      // blue circle showing assist radius around target
-      render::fill_circle( target, assist_radius, { 75, 75, 255, 50 } );
-
-      // object hitcircle outline
-      render::draw_circle( target, scaled_radius, { 255, 255, 255, 100 }, 2.0f );
-    }
-
-    // green text showing current offset magnitude at screen center as reference
-    float offset_mag = g_offset.length();
-
-    if ( offset_mag > 0.5f ) {
-      // draw offset indicator at top-left for debugging
-      render::draw_text( { 10, 30 }, "offset:", { 255, 255, 255, 200 } );
-
-      char buf[ 64 ];
-      snprintf( buf, sizeof( buf ), "  %.1f px", offset_mag );
-      render::draw_text( { 10, 50 }, buf, { 75, 255, 75, 200 } );
-    }
-  }
-
 } // namespace features::aim
