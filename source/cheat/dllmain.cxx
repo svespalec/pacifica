@@ -2,6 +2,7 @@
 #include "utils/utils.hxx"
 #include "hook/hook.hxx"
 #include "features/aim.hxx"
+#include "menu/menu.hxx"
 
 static HMODULE g_module {};
 
@@ -19,6 +20,9 @@ DWORD WINAPI init_thread( LPVOID ) {
     LOG( "failed to init hooks" );
     return 1;
   }
+
+  // init menu first, dxgi exists before jit code
+  features::menu::init();
 
   LOG( "waiting for patterns..." );
 

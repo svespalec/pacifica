@@ -3,15 +3,9 @@
 #include <utils/utils.hxx>
 #include <hook/hook.hxx>
 #include <sdk/sdk.hxx>
+#include <render/render.hxx>
 
 namespace features::aim {
-
-  // config
-  namespace config {
-    inline float pull = 0.02f;   // how fast to pull toward target
-    inline float decay = 0.97f;  // how fast offset decays
-    inline float fov = 15.0f;    // assist range in pixels
-  } // namespace config
 
   // state
   static player* g_player = nullptr;
@@ -125,6 +119,52 @@ namespace features::aim {
 
     SETUP_HOOK( mouse_apply, hooked_apply_input, original_apply_input );
     SETUP_HOOK( update_gameplay, hooked_update_gameplay_state, original_update_gameplay_state );
+  }
+
+  void draw() {
+    if ( !config::display_overlay )
+      return;
+
+    if ( !g_player || !g_player->is_playing() )
+      return;
+
+    if ( !g_player->state || !g_player->state->map || !g_player->state->map->difficulty )
+      return;
+
+    // get current mouse position from last processed input
+    double time = g_player->get_current_time();
+    auto* obj = find_target( time );
+
+    // calculate assist radius
+    float cs = g_player->state->map->difficulty->circle_size;
+    float object_radius = 54.4f - 4.48f * cs;
+    float scaled_radius = g_scaler.scale_value( object_radius );
+    float assist_radius = scaled_radius + config::fov;
+
+    // we need to get the current cursor position. use the offset we're tracking
+    // since we don't have direct access to mouse pos here, approximate from last frame
+
+    if ( obj ) {
+      vec2 target = g_scaler.to_screen( obj->get_position() );
+
+      // blue circle showing assist radius around target
+      render::fill_circle( target, assist_radius, { 75, 75, 255, 50 } );
+
+      // object hitcircle outline
+      render::draw_circle( target, scaled_radius, { 255, 255, 255, 100 }, 2.0f );
+    }
+
+    // green text showing current offset magnitude at screen center as reference
+    float offset_mag = g_offset.length();
+
+    if ( offset_mag > 0.5f ) {
+      // draw offset indicator at top-left for debugging
+      render::draw_text( { 10, 30 }, "offset:", { 255, 255, 255, 200 } );
+
+      char buf[ 64 ];
+      snprintf( buf, sizeof( buf ), "  %.1f px", offset_mag );
+      render::draw_text( { 10, 50 }, buf, { 75, 255, 75, 200 } );
+    }
   }
 
 } // namespace features::aim
