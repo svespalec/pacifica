@@ -124,9 +124,8 @@ namespace features::aim {
       // line from cursor to target center
       float dist = ( target - g_adjusted_pos ).length();
 
-      if ( dist > 2.0f ) {
+      if ( dist > 2.0f ) 
         render::draw_line( g_adjusted_pos, target, to_col( config::col_offset ), config::offset_thickness );
-      }
 
       // subtle fill on target
       render::fill_circle( target, scaled_radius, to_col( config::col_target, 0.2f ) );
@@ -141,9 +140,11 @@ namespace features::aim {
 
     // minimal HUD in corner
     float offset_mag = g_offset.length();
+
     if ( offset_mag > 0.5f ) {
       char buf[ 32 ];
       snprintf( buf, sizeof( buf ), "%.1fpx", offset_mag );
+
       render::draw_text( { 10, 10 }, buf, to_col( config::col_offset ) );
     }
   }

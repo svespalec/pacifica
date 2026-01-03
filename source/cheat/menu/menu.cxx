@@ -132,15 +132,15 @@ namespace features::menu {
 
         ImGui::Checkbox( "display overlay", &aim::config::display_overlay );
 
-        if ( aim::config::display_overlay ) {
+        if ( aim::config::display_overlay ) 
           ImGui::SliderFloat( "line thickness", &aim::config::offset_thickness, 1.0f, 8.0f, "%.1f" );
-        }
-
+        
         if ( aim::config::display_overlay && ImGui::TreeNode( "overlay colors" ) ) {
           ImGui::ColorEdit4( "fov", aim::config::col_fov, ImGuiColorEditFlags_AlphaBar );
           ImGui::ColorEdit4( "target", aim::config::col_target, ImGuiColorEditFlags_AlphaBar );
           ImGui::ColorEdit4( "offset", aim::config::col_offset, ImGuiColorEditFlags_AlphaBar );
           ImGui::ColorEdit4( "cursor", aim::config::col_cursor, ImGuiColorEditFlags_AlphaBar );
+
           ImGui::TreePop();
         }
       }
