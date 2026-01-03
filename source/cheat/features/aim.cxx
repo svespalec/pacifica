@@ -10,8 +10,8 @@ namespace features::aim {
   // state
   static player* g_player = nullptr;
   static vec2 g_offset = {};
-  static vec2 g_cursor_pos = {};      // raw cursor position (before offset)
-  static vec2 g_adjusted_pos = {};    // adjusted position (after offset)
+  static vec2 g_cursor_pos = {};   // raw cursor position (before offset)
+  static vec2 g_adjusted_pos = {}; // adjusted position (after offset)
 
   // find the next hit object we should aim at
   static hit_object* find_target( double current_time ) {
@@ -76,6 +76,7 @@ namespace features::aim {
       g_offset = g_offset + to_target * config::pull;
 
     g_adjusted_pos = pos + g_offset;
+
     return g_adjusted_pos;
   }
 
@@ -100,54 +101,50 @@ namespace features::aim {
     float scaled_radius = g_scaler.scale_value( object_radius );
     float fov_radius = scaled_radius + config::fov;
 
-    // colors
-    const render::color col_fov_fill{ 100, 180, 255, 60 };
-    const render::color col_fov_border{ 100, 180, 255, 80 };
-    const render::color col_hitcircle{ 255, 80, 120, 255 };
-    const render::color col_target_fill{ 255, 80, 120, 50 };
-    const render::color col_offset_line{ 100, 255, 150, 180 };
-    const render::color col_cursor_dot{ 255, 255, 255, 200 };
+    // helper to convert float[4] (0-1) to render::color (0-255)
+    // clang-format off
+    auto to_col = []( const float* c, float alpha_mult = 1.0f ) {
+      return render::color{
+        static_cast< uint8_t >( c[ 0 ] * 255.0f ),
+        static_cast< uint8_t >( c[ 1 ] * 255.0f ),
+        static_cast< uint8_t >( c[ 2 ] * 255.0f ),
+        static_cast< uint8_t >( c[ 3 ] * alpha_mult * 255.0f )
+      };
+    };
+    // clang-format on
 
     // draw FOV circle around current cursor position
-    render::fill_circle( g_adjusted_pos, fov_radius, col_fov_fill );
-    render::draw_circle( g_adjusted_pos, fov_radius, col_fov_border, 1.5f );
+    render::fill_circle( g_adjusted_pos, fov_radius, to_col( config::col_fov ) );
+    render::draw_circle( g_adjusted_pos, fov_radius, to_col( config::col_fov, 1.3f ), 1.5f );
 
     // draw target info if we have one
     if ( obj ) {
       vec2 target = g_scaler.to_screen( obj->get_position() );
 
+      // line from cursor to target center
+      float dist = ( target - g_adjusted_pos ).length();
+
+      if ( dist > 2.0f ) {
+        render::draw_line( g_adjusted_pos, target, to_col( config::col_offset ), config::offset_thickness );
+      }
+
       // subtle fill on target
-      render::fill_circle( target, scaled_radius, col_target_fill );
+      render::fill_circle( target, scaled_radius, to_col( config::col_target, 0.2f ) );
 
       // hitcircle outline
-      render::draw_circle( target, scaled_radius, col_hitcircle, 2.0f );
-
-      // line from cursor to target center (shows pull direction)
-      float dist = ( target - g_adjusted_pos ).length();
-      if ( dist > 2.0f && dist < fov_radius * 2.0f ) {
-        render::draw_line( g_adjusted_pos, target, { 255, 255, 255, 40 }, 1.0f );
-      }
-    }
-
-    // draw offset visualization (line from raw cursor to adjusted cursor)
-    float offset_mag = g_offset.length();
-    if ( offset_mag > 1.0f ) {
-      // line showing the offset pull
-      render::draw_line( g_cursor_pos, g_adjusted_pos, col_offset_line, 2.0f );
-
-      // small dot at raw cursor position
-      render::fill_circle( g_cursor_pos, 3.0f, col_offset_line );
+      render::draw_circle( target, scaled_radius, to_col( config::col_target ), 2.0f );
     }
 
     // small crosshair at adjusted cursor position
-    render::fill_circle( g_adjusted_pos, 4.0f, col_cursor_dot );
+    render::fill_circle( g_adjusted_pos, 4.0f, to_col( config::col_cursor ) );
     render::draw_circle( g_adjusted_pos, 4.0f, { 0, 0, 0, 150 }, 1.0f );
 
     // minimal HUD in corner
+    float offset_mag = g_offset.length();
     if ( offset_mag > 0.5f ) {
       char buf[ 32 ];
       snprintf( buf, sizeof( buf ), "%.1fpx", offset_mag );
-      render::draw_text( { 10, 10 }, buf, { 100, 255, 150, 200 } );
+      render::draw_text( { 10, 10 }, buf, to_col( config::col_offset ) );
     }
   }
 
